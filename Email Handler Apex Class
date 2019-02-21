@@ -1,0 +1,85 @@
+public with sharing class EmailHandler {
+
+ public static String emailBodyCreatorForReminder(List<Contact> lstConsToSendEmail){
+    String body = '';    
+        for(contact con3 :[Select id,Email,FirstName,language__c,survey_date__c from Contact Where  Id IN :lstConsToSendEmail]){
+                              
+       if(con3.language__c == 'de')
+       body+= 'Hey '+con3.FirstName+', bitte fülle unsere Umfrage aus: http://n26.com/survey/' +con3.Id+''; 
+       else if(con3.language__c == 'en')
+       body+= 'Hey '+con3.FirstName+', please fill out our survey: http://n26.com/survey/'+con3.Id+'';
+        else
+       body+= 'Hey '+con3.FirstName+', please fill out our survey: http://n26.com/survey/'+con3.Id+'';
+       
+          }
+        return body;  
+    } 
+ 
+ public static void reminderForAllClients(Map<User, List<Contact>> userAgaistlstConMap, Map<String, User> userIdAgaistUserMap){ 
+ List<Messaging.SingleEmailMessage> mails = new List<Messaging.SingleEmailMessage>();
+ 
+ for(User user : userAgaistlstConMap.KeySet()){
+            if(user != null){   
+                Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                system.debug('@@@ Called From 2'+user); 
+                
+     
+      String verbiage1 = ''; 
+      mail.setSubject(' Opportunity Project dates and/or status needs to  be fixed');
+      List<String> toAddress = new List<String>();
+                for(Contact c : userAgaistlstConMap.get(user)){
+                    User u = userIdAgaistUserMap.get(c.OwnerId);  
+                    toAddress.add(u.Email);
+                             
+                }
+       mail.setToAddresses(toAddress);
+        // Create Body       
+                String body = '<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><title>Untitled Document</title><style type="text/css"> <!-- body,td,tr {    font-family:Arial, Helvetica, sans-serif;   font-size:12px; } .table_body_text {    background:#7799B2;     font-family:Arial, Helvetica, sans-serif;   font-size:12px;     font-weight:bold;   border-bottom:1px solid #FFF;   border-left:1px solid #FFF;     padding:5px; } .table_body_text_bold{   background:#3CBBEC;     font-family:Arial, Helvetica, sans-serif;   font-size:12px;     font-weight:bold;   color:#FFF;     border-bottom:1px solid #FFF;   border-left:1px solid #FFF;     padding:5px; } .table_body_text_grey {  background:#E9E9E9;     font-family:Arial, Helvetica, sans-serif;   font-size:12px;     border-bottom:1px solid #FFF;   border-left:1px solid #FFF;     padding:5px; } strong{     color:#006895; } strong a{     color:#006895;    text-decoration:none; } strong a:hover{     color:#006895;  text-decoration:none; } --> </style> </head>';        
+         
+                body += emailBodyCreatorForReminder(userAgaistlstConMap.get(user));
+        
+                 
+        body += '</body> </html>';
+         mail.setHtmlBody(body);
+         mails.add(mail);
+        }
+       }
+       system.debug('Size'+mails.size());
+     //   Messaging.sendEmail(mails);
+        Messaging.SendEmailResult[] results = Messaging.sendEmail(mails);
+        
+  
+        Set<String> contactIdSet = new Set<String>();
+        for(integer i=0 ;i<mails.size();i++){
+        if (results[i].success) 
+        {
+          System.debug('@@@@@mails'+mails[i].getHtmlBody());
+          String str = mails[i].getHtmlBody();
+          system.debug('Expected is ' + str.substringAfter('survey/'));
+          String str1 = str.substringAfter('survey/');
+          String str2 =str1.left(18);
+          contactIdSet.add(str2);
+          System.debug('@@@@contactIdSet'+contactIdSet);
+          System.debug('The email was sent successfully.');
+          
+        } 
+       else 
+      {
+      System.debug('The email failed to send: ' + results[i].errors[i].message);
+      }   
+   }
+    System.debug('@@@@@ContactIdSetSize' +contactIdSet.size());
+    List<Contact> lstContactsToUpdate = new List<Contact>();
+    if(contactIdSet.size()>0){
+    for(Contact cont :[Select id,survey_date__c from Contact where Id IN :contactIdSet]){
+        cont.survey_date__c = null;
+        lstContactsToUpdate.add(cont); 
+    
+    }
+    update lstContactsToUpdate;
+  }
+ }
+}
+
+                                                
+ 	
