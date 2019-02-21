@@ -1,0 +1,18 @@
+1 .I am sending the approaches to follow for completing this case becuase of lack of time for me due to project delivery
+2. Create two custom fields on the contact object 
+  Product which is lookup to the product object.
+  Home Country which is picklist type with the below values:
+DE
+FR
+ES
+IT
+UK
+3.Store the tables in custom meta data .
+4.Need to create a lighting component which will pass the case id to the java script from there to apex method.
+5.In the apex method need to query the contact -Product and Home Country Details.
+6.Using these details query the data from Custom Meta Data and display in the lightning component.
+with headers as below:
+Cost Per Calender Month
+ATM Fee in other Countries
+Card Replacement Cost.
+7.Fetch the values from the Custom meta data and display the asscoiated cost under each category depending upon the home country.
