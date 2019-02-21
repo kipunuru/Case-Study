@@ -1,0 +1,6 @@
+global class surveyEmailScheduler implements Schedulable {
+    global void execute(SchedulableContext sc) {
+        SendEmailToCustomer  sec = new SendEmailToCustomer (); 
+        database.executebatch(sec);
+    }
+}
