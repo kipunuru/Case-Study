@@ -1,0 +1,3 @@
+Create a custom field on Contact object for survey date with data type date.
+Create a custom field on Contact object for language with data type text and length 2 and default value as 'en'.
+Create a schedulable job which will execute every day at 5 am to send email notifications to the customers for survey.
