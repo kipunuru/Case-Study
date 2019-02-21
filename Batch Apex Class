@@ -1,0 +1,38 @@
+global class SendEmailToCustomer implements Database.Batchable<sObject>{
+
+   global Database.QueryLocator start(Database.BatchableContext BC){
+      return Database.getQueryLocator([select id,firstname,language__c,OwnerId,survey_date__c from Contact where survey_date__c <= TODAY]);
+   }
+ 
+   global void execute(Database.BatchableContext BC, List<sObject> scope){
+     List<Contact> lstConsToSendEmail = new List<Contact>();
+
+     for(sobject s : scope){
+         Contact  con = (Contact)s;
+         lstConsToSendEmail.add(con);
+     }
+      if(lstConsToSendEmail.size()>0){
+      Set<String> ownerIdSet = new Set<String>();
+      for(Contact con :lstConsToSendEmail){ 
+          ownerIdSet.add(con.OwnerId);
+     }
+     Map<String, User> userIdAgaistUserMap = new Map<String, User>([select id,name,Email from user where ID IN:ownerIdSet]);
+     Map<User, List<Contact>> results = new Map<User, List<Contact>>();
+     
+     for(Contact con1: lstConsToSendEmail) {
+        if(!results.containsKey(userIdAgaistUserMap.get(con1.OwnerId))) {
+            results.put(userIdAgaistUserMap.get(con1.OwnerId), new List<Contact>());
+        }
+        results.get(userIdAgaistUserMap.get(con1.OwnerId)).add(con1);
+    }
+    
+    System.debug('results Map:'+results);
+    System.debug('userIdAgaistUserMap:'+userIdAgaistUserMap);
+     EmailHandler.reminderForAllClients(results,userIdAgaistUserMap);
+     
+     
+  }
+}
+   global void finish(Database.BatchableContext BC){
+   }
+}
